@@ -1,0 +1,364 @@
+---
+title: "My answers"
+author: "My name"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: html_document
+---
+
+## Motivation
+
+All social media interactions occur within a network of users who are connected to one and other.
+In this tutorial you revisit how extract the network relationships from raw Twitter data into and summarize aspects of the network and individual nodes.
+
+Exercise 1 revisits notions from Lab 1, and constructs a mentions network from Twitter Data.
+Exercise 2 computes summary statistics about a network to help understand the network's size and level of connectivity.
+Exercise 3 turns to measuring the importance of individual nodes on a network by looking at their connectivity to other nodes.
+Exercise 4 explores how to detect sub-communities within an network and identify influential users within these communities.
+
+## Learning Goals
+
+By the end of this tutorial you will be able to:
+
+1. Construct Samples from a larger network
+2. Compute summary statistics for a given network
+3. Define metrics of node importance
+4. Analyse the importance of individual nodes based on various measures of node centrality
+5. Explain how the infomap and Louvain community detection models work
+6. Implement the infomap and Louvain community models
+7. Visualize sub-communities within a network.
+8. Assess the marketing importance of finding influential nodes and sub-communities.
+
+## Instructions to Students
+
+These tutorials are **not graded**, but we encourage you to invest time and effort into working through them from start to finish.
+Add your solutions to the `lab-06_answer.Rmd` file as you work through the exercises so that you have a record of the work you have done.
+
+Obtain a copy of both the question and answer files using Git.
+To clone a copy of this repository to your own PC, use the following command:
+
+```{bash, eval = FALSE}
+$ git clone https://github.com/tisem-digital-marketing/smwa-lab-06.git
+```
+
+
+Once you have your copy, open the answer document in RStudio as an RStudio project and work through the questions.
+
+The goal of the tutorials is to explore how to "do" the technical side of social media analytics.
+Use this as an opportunity to push your limits and develop new skills.
+When you are uncertain or do not know what to do next - ask questions of your peers and the instructors on the class Slack channel `#lab-06-discussion`.
+
+## Getting Started: Data & R Packages
+
+This Lab revisits the data on tweets that use the #rstats hashtag that we used in Lab 01.
+
+To gain access to the data, run the following code to download it and save it in the `data` directory:
+
+```{r, rstat-dowload, cache=TRUE}
+url <- "https://bit.ly/3r8Gu4M"
+# where to save data
+out_file <- "data/rstats_tweets.rds"
+# download it!
+download.file(url, destfile = out_file, mode = "wb")
+```
+
+You might need to use the following `R` libraries throughout this exercise:^[
+    If you haven't installed one or more of these packages, do so by entering `install.packages("PKG_NAME")` into the R console and pressing ENTER.
+]
+
+```{r, eval = TRUE, message=FALSE, warning=FALSE}
+library(readr)
+library(tidygraph)
+library(ggraph)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(igraph)
+```
+
+## Exercise 1: From Tweets to Networks
+
+In this exercise we will transform the data from the raw data provided by Twitter into a `tidygraph`.
+Much of the content will be a revision of Lab 01.
+
+1. Load the data into R.
+
+```{r}
+# Write your answer here
+```
+
+
+2. We will construct the network using mentions. 
+Drop all tweets that do not include a mention, and keep only columns that include the author of the tweet and the name(s) of the users that are mentioned.
+
+```{r}
+# Write your answer here
+```
+
+
+3. Transform your data from (2) to be 'tidy'. 
+In particular if multiple users are mentioned in a tweet, there should be one row per username rather than multiple names nested in a single column.
+Also, drop any occurrences where a user mentions themselves.
+
+```{r}
+# Write your answer here
+```
+
+
+4. To keep computation time manageable, we will use a sample of users from the data in (3).
+To construct this sample, proceed as follows:
+
+(a) Set R's seed to `1234567890`, so that we all get the same answer.
+(b) Sample 250 users from the network. Weight users based on the number of times their `screen_name` appears in your answer from (3), so that those who tweet and mention relatively more often are more likely to be sampled.
+(c) Find all the unique usernames that are mentioned by this sample of users.
+(d) Find all unique 'mentioner - mentionee' pairs where the author of the tweet is either one of the 250 seed users OR a user identified in (c).
+
+Here's some code to get you started with each part:
+
+```{r, eval = FALSE}
+# (a)
+set.seed(YOUR_CODE)
+
+# (b)
+seed_users <-
+    YOUR_DATA %>%
+    # Count the number of times a user name appear as a mentioner
+    # if one tweet mentions 2 people, the authors name appears,
+    # and will be counted twice -- this is OK
+    YOUR_CODE %>%
+    # Sample 250 users 
+    YOUR_CODE(250, weight = YOUR_CODE)
+
+# (c)
+seed_connections <-
+    YOUR_DATA %>% 
+    filter(YOUR_CODE %in% YOUR_CODE)
+
+first_step <- unique(YOUR CODE)
+
+# (d)
+all_users <- unique(c(YOUR_CODE, YOUR_CODE))
+
+edgelist <- 
+    YOUR_DATA %>%
+    filter(YOUR_CODE) %>%
+    distinct()
+```
+
+```{r}
+# Write your answer here
+```
+
+
+5. Convert the edge-list you created in (4) to an undirected network object.
+
+```{r}
+# Write your answer here
+```
+
+
+## Exercise 2: Network Statistics
+
+With a network in hand, next we turn to describing the network, in terms of its' size and density.
+
+Throughout these questions, you will be asked to provide some definitions of concepts you will use. 
+We encourage you to look for these definitions yourself, and a useful starting point maybe [this resource](https://www.sci.unich.it/~francesc/teaching/network/) (Ignore any code they provide and focus on the explanations).
+
+1. How many nodes are in the network? Use the function `gorder()` to find the answer.
+
+```{r}
+# Write your answer here
+```
+
+
+2. How many edges are there in the network? Use the function `gsize()` to find the answer.
+
+```{r}
+# Write your answer here
+```
+
+
+3. How many possible connections are there in the data?
+What fraction of these potential edges do we see in the network?
+Based on your answers, do you think the network is sparsely connected?
+
+```{r}
+# Write your answer here
+```
+
+
+4. Define the term 'clustering coefficient' (also called transitivity). What is the clustering coefficient in the data? Use the functions `transitivity()` to find the answer and interpret the result. 
+
+```{r}
+# Write your answer here
+```
+
+
+5. Why might a marketing analyst care about the summary statistics you documented above?
+
+**Write your answer here**
+
+## Exercise 3: Finding Influential Users
+
+We now turn to measuring centrality of users/nodes in the network.
+There are alternative measures we could use, so we will explore some of the common ones in the exercise.
+
+As we progress, we will be adding information about about each node's influence. Use and extend the following code to add this information to each node:
+
+```{r, eval = FALSE}
+tg <-
+    tg %>%
+    activate(nodes) %>%
+    mutate(VAR_NAME = FUNCTION())
+```
+
+
+1. Define what a node's degree is.
+
+**Write your answer here**
+
+2. Compute each node's degree using the `centrality_degree()` function.
+
+```{r}
+# Write your answer here
+```
+
+
+3. Provide intuitive definitions of betweenness centrality, eigenvector centrality and PageRank centrality.
+
+**Write your answer here**
+
+4. Compute each of the measures in (3), using the functions `centrality_betweenness()`, `centrality_eigen()` and `centrality_pagerank()`.
+
+```{r}
+# Write your answer here
+```
+
+
+Let's move these measures into a dataframe that we can explore.
+Run the following code:
+
+```{r, eval = FALSE}
+centrality_measures <-
+    tg %>%
+    activate(nodes) %>%
+    as_tibble()
+```
+
+For each measure of centrality, a higher value means that a node is more influential, although the scale of the metrics are not all the same. 
+Let's explore the measure of influence in our data.
+
+5. Restrict your sample to users that have a degree centrality score score of less than 100. Plot the distribution of degree centrality as a histogram. Describe the pattern you see.
+
+```{r}
+# Write your answer here
+```
+
+
+6. Restrict the data to the top 20 nodes based on the PageRank measure of centrality.
+For each measure of centrality, compute a node's rank compared to others. 
+Use the following code to get started:
+
+```{r, eval = FALSE}
+top_20 <- 
+    centrality_measures %>%
+    arrange(desc(page_rank)) %>%
+    head(20) %>%
+    mutate(page_rank_rank = dense_rank(page_rank) #, 
+           # YOUR_CODE
+    )
+```
+
+```{r}
+# Write your answer here
+```
+
+
+7. Do the rankings yield similar results across alternative measures of centrality? Can you show this in a graph? 
+
+```{r}
+# Write your answer here
+```
+
+
+8. As a marketer, what is the value of computing these measures of centrality and ranking users?
+Could you use these results to kick start some form of a marketing campaign? 
+Describe why you came to your conclusion.
+
+**Write your answer here**
+
+## Exercise 4: Grouping Algorithms
+
+Within a network we can group sets of nodes into 'communities' where subsets of nodes have strong inter-relations.
+In this final exercise we will look at how to implement two common community detection algorithms to find such communities.
+We can then visualize the communities among the larger network, and look for influential users within each community
+
+1. The first community detection algorithm we will look at is `infomap`. Do some research online in order to provide an intuitive explanation of how the infomap algorithm works.
+
+**Write your answer here**
+
+2. Implement the infomap community detection algorithm by running the following code:
+
+```{r}
+# tg <- 
+#     tg %>%
+#     activate(nodes) %>%
+#     mutate(grp_info = group_infomap()) 
+```
+
+
+3. How many communities did the algorithm detect?
+
+```{r}
+# Write your answer here
+```
+
+4. How large is each community?
+
+```{r}
+# Write your answer here
+```
+
+5. Visualize the top 5 communities in terms of group size by completing this code:
+
+
+```{r}
+# Write your answer here
+```
+
+
+Let's try a different community detection algorithm, called the Louvain method. 
+
+6. Do some research online in order to provide an intuitive explanation of how the Louvain algorithm works.
+
+**Write your answer here**
+
+7. Adapt your code from (2) to identify communities using the Louvain Method.
+The function you will want to use is `group_louvain()`
+
+```{r}
+# Write your answer here
+```
+
+
+8. How many communities did the algorithm detect? What are the community sizes of each algorithm?
+
+```{r}
+# Write your answer here
+```
+
+9. Visualize the top 5 communities identified in (7) by adapting the code you constructed in (5). 
+
+```{r}
+# Write your answer here
+```
+
+
+10. For each of the top 5 groups we identified using the Louvain model, find the 5 most influential users as measured by PageRank.
+
+```{r}
+# Write your answer here
+```
+
+11. Explain how identifying communities and influential users within them can be useful in the design of a marketing campaign aimed at using influencers.
+
+**Write your answer here**
